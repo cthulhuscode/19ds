@@ -1,91 +1,139 @@
-class Graph{
-    constructor(noVertices = null){
-        this.noVertices = noVertices;
-        this.matrix = [this.noVertices];
-        this.makeMatrix();
-    }
-
-    addVertex(o){
-        this.matrix.push(this.makeNewRow(this.noVertices));
-        for(let i in this.matrix)
-            this.matrix[i].push(0);
-        this.noVertices++;
-    }
-
-    makeMatrix(){
-        for(let i = 0; i < this.noVertices; i++)
-            this.matrix[i] = new Array(this.noVertices);
-        this.initZero();
-    }
+(()=>{
+    class Graph { 
+        constructor() 
+        { 
+            this.noVertices = null;
+            this.noEdges = null; 
+            this.AdjList = new Map(); 
+            this.multigraph = false;
+        } 
+        
+        addVertex(v){
+            this.noVertices++;
+            this.AdjList.set(v, [])
+        } 
     
-    makeNewRow(length){
-        let vec = [];
-        for(let i = 0; i < length; i++)
-            vec.push(0);
-        return vec;
-    }
-
-    initZero(){
-        for(let i = 0; i < this.noVertices; i++){
-            for(let k = 0; k < this.noVertices; k++)
-                this.matrix[i][k] = 0;
-        }  
-        return this.matrix;
-    }
-
-    addEdge(v1,v2, isSymmetrical=false){
-        if(isSymmetrical){
-            this.matrix[v1][v2] = this.matrix[v1][v2] + 1;
-            this.matrix[v2][v1] = this.matrix[v2][v1] + 1;
+        addEdge(v, w, symmetric = false) {
+            if(this.AdjList.get(v).includes(w) || this.AdjList.get(w).includes(v))
+                this.multigraph = true;
+            if(symmetric){
+                this.AdjList.get(v).push(w);
+                this.AdjList.get(w).push(v);
+            }            
+            else
+                this.AdjList.get(v).push(w);
+            this.noEdges++;
         }
-        else
-        this.matrix[v1][v2] = this.matrix[v1][v2] + 1;
-    }
-
-    printGraph(){
-        return console.table(this.matrix);
-    }
+        printGraph(){
+            var get_keys = this.AdjList.keys(); 
+      
+            // iterate over the vertices 
+            for (var i of get_keys)  
+            { 
+                // great the corresponding adjacency list 
+                // for the vertex 
+                var get_values = this.AdjList.get(i); 
+                var conc = ""; 
+        
+                // iterate over the adjacency list 
+                // concatenate the values into a string 
+                for (var j of get_values) 
+                    conc += j + " "; 
+        
+                // print the vertex and its adjacency list 
+                console.log(i + " -> " + conc); 
+            }
+        }
+        
+        isComplete(){
+            let edgesSum = ((this.noVertices * (this.noVertices - 1)) / 2);
+            if (this.noEdges === edgesSum)
+                return true;
+            else 
+                return false;
+        
+        }//<- boolean
     
-    isComplete(){//<- boolean
-        for(let t = 0; t < this.matrix.length; t++){
-            for(let k=t; k < this.matrix.length; k++){
-                if(k!=t){
-                    if(this.matrix[t][k] < 1)
+        isSubgraph(g){
+            let keys = this.objectToArray(this.AdjList.keys()); //Convert object Keys to an array
+            for(let i = 0; i < g.length; i++){
+                if(!keys.includes(g[i])) 
+                    return false
+            }
+                return true;   
+        }
+    
+        objectToArray(object){
+            return Array.from(object);
+        }
+    
+        isMultigraph(){
+           return this.multigraph;
+        }//<- boolean
+    
+        makeAdjacencyMatrix(){
+            let keys = this.objectToArray(this.AdjList.keys()); //Convert object Keys to an array
+            let matrix = [];
+            
+            //making matrix structure
+            for(let i = 0; i < keys.length; i++){
+                matrix.push([]);
+            }
+    
+            for(let i = 0; i < keys.length; i++){
+                for(let k = 0; k < keys.length; k++){
+                    if(this.AdjList.get(keys[i]).includes(keys[k]))
+                        matrix[i].push(1);
+                    else
+                        matrix[i].push(0);
+                }            
+            }
+           return matrix;
+        }
+    
+        isSymmetric(){
+            let matrix = this.makeAdjacencyMatrix()
+            //this.AdjList.forEach((v,k)=>{console.log('v = ' + v + ' k = '+ k); matrix.push(v)});
+            
+            for(let i = 0; i < matrix.length; i++){
+                for(let k = 1; k < matrix.length; k++){
+                    //console.log('['+k+']'+'['+i+']:' + this.matrix[i][k] + ' != ' + '['+k+']'+'['+i+']:' + this.matrix[k][i])
+                    if(matrix[i][k] != matrix[k][i] && k!=i)
                         return false;
-                }
+                }                
             }
+            return true
         }
-        return true;
-    }
     
-    isMultigraph(){
-        for(let t = 0; t < this.matrix.length; t++){
-            for(let k=t; k < this.matrix.length; k++){
-                if(k!=t){
-                    if(this.matrix[t][k] > 1)
-                        return true;
-                }
-            }
+        isDigraph(){
+            return !this.isSymmetric();
+        }//<- boolean -- directed 
+    
+        isDirected(){
+            return !this.isSymmetric();
         }
-        return false;
-    }//<- boolean
-    isSubgraph(g){}//<- boolean
-}
-
-let g = new Graph(4);
-g.addVertex();
-
-//Making a complete graph
-g.addEdge(0,1,true)
-g.addEdge(0,2,true)
-g.addEdge(0,3,true)
-g.addEdge(0,4,true)
-
-g.addEdge(1,2,true)
-g.addEdge(1,3,true)
-g.addEdge(1,4,true)
-
-g.addEdge(2,3,true)
-g.addEdge(2,4,true)
-
-g.addEdge(3,4,true)
+    } 
+    
+    let g = new Graph();
+    
+    //addEdges
+    g.addVertex('A');
+    g.addVertex('B');
+    g.addVertex('C')
+    
+    //Complete graph
+    g.addEdge('A','B', true);
+    g.addEdge('A','C', true);
+    g.addEdge('B','C', true);
+    
+    //isComplete
+    console.log('isComplete = ' + g.isComplete())
+    //isSubgraph
+    console.log('isSubgraph = ' + g.isSubgraph(['A','B','C']))//true
+    console.log('isSubgraph = ' + g.isSubgraph(['A','B','C','D']))//false
+    //isMultigraph
+    console.log('isMultigraph = ' + g.isMultigraph())
+    //isDirected
+    console.log('isDirected = ' + g.isDirected())
+    
+})();
